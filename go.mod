@@ -11,7 +11,6 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.18.3
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.5
-	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/o1egl/paseto v1.0.0
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/viper v1.20.1

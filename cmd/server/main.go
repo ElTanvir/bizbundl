@@ -10,9 +10,7 @@ import (
 	"portfolioed/internal/modules/root"
 	"portfolioed/internal/server"
 	"portfolioed/util"
-
 	"github.com/jackc/pgx/v5/pgxpool"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
