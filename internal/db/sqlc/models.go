@@ -5,27 +5,34 @@
 package db
 
 import (
-	"time"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type CssVariable struct {
-	Name         string     `json:"name"`
-	Value        string     `json:"value"`
-	VariableType string     `json:"variable_type"`
-	IsSystem     bool       `json:"is_system"`
-	CreatedAt    *time.Time `json:"created_at"`
-	UpdatedAt    *time.Time `json:"updated_at"`
+	Name         string           `json:"name"`
+	Value        string           `json:"value"`
+	VariableType string           `json:"variable_type"`
+	IsSystem     bool             `json:"is_system"`
+	CreatedAt    pgtype.Timestamp `json:"created_at"`
+	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
+}
+
+type GeneralDatum struct {
+	Name      string           `json:"name"`
+	Value     string           `json:"value"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
 }
 
 type Lead struct {
-	ID        string  `json:"id"`
-	FirstName string  `json:"first_name"`
-	LastName  string  `json:"last_name"`
-	Email     string  `json:"email"`
-	Phone     *string `json:"phone"`
-	Company   *string `json:"company"`
-	Message   *string `json:"message"`
-	Status    string  `json:"status"`
-	Source    *string `json:"source"`
-	CreatedAt string  `json:"created_at"`
+	ID        string           `json:"id"`
+	FirstName string           `json:"first_name"`
+	LastName  string           `json:"last_name"`
+	Email     string           `json:"email"`
+	Phone     *string          `json:"phone"`
+	Company   *string          `json:"company"`
+	Message   *string          `json:"message"`
+	Status    string           `json:"status"`
+	Source    *string          `json:"source"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
 }

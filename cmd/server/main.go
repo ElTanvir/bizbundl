@@ -1,7 +1,7 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"os"
 	"portfolioed/internal/cloudflare"
 	"portfolioed/internal/config"
@@ -12,6 +12,7 @@ import (
 	"portfolioed/internal/server"
 	"portfolioed/util"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -22,21 +23,20 @@ func main() {
 	if cfg.Environment == "development" {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
-	conn, err := sql.Open("sqlite3", cfg.DBSource())
+	connPool, err := pgxpool.New(context.Background(), cfg.DBSource())
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot connect to db")
 	}
-	defer conn.Close()
 	migrationDir := "internal/db/migration"
 	if cfg.InDocker == "true" {
 		migrationDir = "/app/internal/db/migration"
 	}
-	err = util.RunMigrations(cfg.DBSource(), migrationDir)
+	err = util.RunMigrations(cfg.DBSourceURL(), migrationDir)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to run migrations")
 	}
 	util.RegisterTagName()
-	dbStore := db.NewStore(conn)
+	dbStore := db.NewStore(connPool)
 	app, err := server.NewServer(cfg, dbStore)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to create server")

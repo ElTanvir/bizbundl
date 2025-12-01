@@ -12,7 +12,7 @@ CREATE TABLE "leads" (
     "message"     TEXT,
     "status"      TEXT NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'qualified', 'converted', 'lost')),
     "source"      TEXT,
-    "created_at"  TEXT NOT NULL DEFAULT (datetime('now'))
+    "created_at"  TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- Fast dedupe and filtering

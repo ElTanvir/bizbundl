@@ -5,8 +5,8 @@ CREATE TABLE css_variables (
     value TEXT NOT NULL,   -- The CSS value, e.g., #8b5cf6
     variable_type TEXT NOT NULL, -- For organization, e.g., color, font, radius
     is_system BOOLEAN NOT NULL DEFAULT FALSE, -- System variables cannot be deleted
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Index for fast type lookups
