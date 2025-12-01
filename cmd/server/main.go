@@ -8,7 +8,6 @@ import (
 	db "portfolioed/internal/db/sqlc"
 	"portfolioed/internal/modules/menu"
 	"portfolioed/internal/modules/root"
-	"portfolioed/internal/modules/theme"
 	"portfolioed/internal/server"
 	"portfolioed/util"
 
@@ -41,7 +40,6 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to create server")
 	}
-	theme.Init(app)
 	root.Init(app)
 	menu.Init(app)
 	log.Fatal().Err(app.Start()).Msg("failed to start server")
