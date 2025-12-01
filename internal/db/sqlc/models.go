@@ -60,6 +60,7 @@ type User struct {
 	HashedPassword  string             `json:"hashed_password"`
 	FirstName       *string            `json:"first_name"`
 	LastName        *string            `json:"last_name"`
+	FullName        *string            `json:"full_name"`
 	Email           *string            `json:"email"`
 	Phone           *string            `json:"phone"`
 	Role            UserRole           `json:"role"`

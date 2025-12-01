@@ -13,11 +13,11 @@ import (
 type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteUser(ctx context.Context, id pgtype.UUID) error
-	GetUserByEmail(ctx context.Context, email *string) (User, error)
+	GetUserByEmailOrUsername(ctx context.Context, email *string) (User, error)
 	GetUserById(ctx context.Context, id pgtype.UUID) (User, error)
-	GetUserByUsername(ctx context.Context, username *string) (User, error)
 	HardDeleteUser(ctx context.Context, id pgtype.UUID) error
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
+	UpdatePassword(ctx context.Context, arg UpdatePasswordParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }
 
