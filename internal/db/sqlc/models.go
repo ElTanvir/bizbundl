@@ -54,6 +54,83 @@ func (ns NullUserRole) Value() (driver.Value, error) {
 	return string(ns.UserRole), nil
 }
 
+type Category struct {
+	ID          pgtype.UUID        `json:"id"`
+	ParentID    pgtype.UUID        `json:"parent_id"`
+	Name        string             `json:"name"`
+	Slug        string             `json:"slug"`
+	Description *string            `json:"description"`
+	IsActive    bool               `json:"is_active"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type DigitalAsset struct {
+	ID            pgtype.UUID        `json:"id"`
+	VariantID     pgtype.UUID        `json:"variant_id"`
+	Name          string             `json:"name"`
+	FilePath      string             `json:"file_path"`
+	FileSize      *int64             `json:"file_size"`
+	ContentType   *string            `json:"content_type"`
+	DownloadCount int32              `json:"download_count"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+}
+
+type Product struct {
+	ID          pgtype.UUID        `json:"id"`
+	Name        string             `json:"name"`
+	Slug        string             `json:"slug"`
+	Description *string            `json:"description"`
+	IsActive    bool               `json:"is_active"`
+	IsDigital   bool               `json:"is_digital"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type ProductCategory struct {
+	ProductID  pgtype.UUID `json:"product_id"`
+	CategoryID pgtype.UUID `json:"category_id"`
+}
+
+type ProductKey struct {
+	ID        pgtype.UUID        `json:"id"`
+	VariantID pgtype.UUID        `json:"variant_id"`
+	KeyValue  string             `json:"key_value"`
+	IsUsed    bool               `json:"is_used"`
+	OrderID   pgtype.UUID        `json:"order_id"`
+	UsedAt    pgtype.Timestamptz `json:"used_at"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type ProductOption struct {
+	ID        pgtype.UUID `json:"id"`
+	ProductID pgtype.UUID `json:"product_id"`
+	Name      string      `json:"name"`
+	Position  int32       `json:"position"`
+}
+
+type ProductOptionValue struct {
+	ID       pgtype.UUID `json:"id"`
+	OptionID pgtype.UUID `json:"option_id"`
+	Value    string      `json:"value"`
+	Position int32       `json:"position"`
+}
+
+type ProductVariant struct {
+	ID            pgtype.UUID        `json:"id"`
+	ProductID     pgtype.UUID        `json:"product_id"`
+	Sku           *string            `json:"sku"`
+	Price         pgtype.Numeric     `json:"price"`
+	StockQuantity int32              `json:"stock_quantity"`
+	IsActive      bool               `json:"is_active"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt     pgtype.Timestamptz `json:"deleted_at"`
+}
+
 type User struct {
 	ID              pgtype.UUID        `json:"id"`
 	Username        *string            `json:"username"`
@@ -69,4 +146,9 @@ type User struct {
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt       pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type VariantOptionValue struct {
+	VariantID     pgtype.UUID `json:"variant_id"`
+	OptionValueID pgtype.UUID `json:"option_value_id"`
 }
