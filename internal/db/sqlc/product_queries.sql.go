@@ -46,13 +46,14 @@ func (q *Queries) AssignOptionValueToVariant(ctx context.Context, arg AssignOpti
 const createCategory = `-- name: CreateCategory :one
 
 INSERT INTO categories (
-    parent_id, name, slug, description, is_active
+    store_id, parent_id, name, slug, description, is_active
 ) VALUES (
-    $1, $2, $3, $4, $5
-) RETURNING id, parent_id, name, slug, description, is_active, created_at, updated_at
+    $1, $2, $3, $4, $5, $6
+) RETURNING id, parent_id, name, slug, description, is_active, created_at, updated_at, store_id
 `
 
 type CreateCategoryParams struct {
+	StoreID     pgtype.UUID `json:"store_id"`
 	ParentID    pgtype.UUID `json:"parent_id"`
 	Name        string      `json:"name"`
 	Slug        string      `json:"slug"`
@@ -65,6 +66,7 @@ type CreateCategoryParams struct {
 // #############################################################################
 func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) (Category, error) {
 	row := q.db.QueryRow(ctx, createCategory,
+		arg.StoreID,
 		arg.ParentID,
 		arg.Name,
 		arg.Slug,
@@ -81,27 +83,29 @@ func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) 
 		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.StoreID,
 	)
 	return i, err
 }
 
 const createOptionTemplate = `-- name: CreateOptionTemplate :one
 
-INSERT INTO option_templates (name, template_data)
-VALUES ($1, $2)
-RETURNING id, name, template_data, created_at, updated_at
+INSERT INTO option_templates (store_id, name, template_data)
+VALUES ($1, $2, $3)
+RETURNING id, name, template_data, created_at, updated_at, store_id
 `
 
 type CreateOptionTemplateParams struct {
-	Name         string `json:"name"`
-	TemplateData []byte `json:"template_data"`
+	StoreID      pgtype.UUID `json:"store_id"`
+	Name         string      `json:"name"`
+	TemplateData []byte      `json:"template_data"`
 }
 
 // #############################################################################
 // ## OPTION TEMPLATES
 // #############################################################################
 func (q *Queries) CreateOptionTemplate(ctx context.Context, arg CreateOptionTemplateParams) (OptionTemplate, error) {
-	row := q.db.QueryRow(ctx, createOptionTemplate, arg.Name, arg.TemplateData)
+	row := q.db.QueryRow(ctx, createOptionTemplate, arg.StoreID, arg.Name, arg.TemplateData)
 	var i OptionTemplate
 	err := row.Scan(
 		&i.ID,
@@ -109,6 +113,7 @@ func (q *Queries) CreateOptionTemplate(ctx context.Context, arg CreateOptionTemp
 		&i.TemplateData,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.StoreID,
 	)
 	return i, err
 }
@@ -116,18 +121,19 @@ func (q *Queries) CreateOptionTemplate(ctx context.Context, arg CreateOptionTemp
 const createProduct = `-- name: CreateProduct :one
 
 INSERT INTO products (
-    name, slug, description, is_active, is_digital
+    store_id, name, slug, description, is_active, is_digital
 ) VALUES (
-    $1, $2, $3, $4, $5
-) RETURNING id, name, slug, description, is_active, is_digital, created_at, updated_at, deleted_at
+    $1, $2, $3, $4, $5, $6
+) RETURNING id, name, slug, description, is_active, is_digital, created_at, updated_at, deleted_at, store_id
 `
 
 type CreateProductParams struct {
-	Name        string  `json:"name"`
-	Slug        string  `json:"slug"`
-	Description *string `json:"description"`
-	IsActive    bool    `json:"is_active"`
-	IsDigital   bool    `json:"is_digital"`
+	StoreID     pgtype.UUID `json:"store_id"`
+	Name        string      `json:"name"`
+	Slug        string      `json:"slug"`
+	Description *string     `json:"description"`
+	IsActive    bool        `json:"is_active"`
+	IsDigital   bool        `json:"is_digital"`
 }
 
 // #############################################################################
@@ -135,6 +141,7 @@ type CreateProductParams struct {
 // #############################################################################
 func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error) {
 	row := q.db.QueryRow(ctx, createProduct,
+		arg.StoreID,
 		arg.Name,
 		arg.Slug,
 		arg.Description,
@@ -152,6 +159,7 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.StoreID,
 	)
 	return i, err
 }
@@ -280,32 +288,47 @@ func (q *Queries) CreateProductVariant(ctx context.Context, arg CreateProductVar
 
 const deleteCategory = `-- name: DeleteCategory :exec
 DELETE FROM categories
-WHERE id = $1
+WHERE id = $1 AND store_id = $2
 `
 
-func (q *Queries) DeleteCategory(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteCategory, id)
+type DeleteCategoryParams struct {
+	ID      pgtype.UUID `json:"id"`
+	StoreID pgtype.UUID `json:"store_id"`
+}
+
+func (q *Queries) DeleteCategory(ctx context.Context, arg DeleteCategoryParams) error {
+	_, err := q.db.Exec(ctx, deleteCategory, arg.ID, arg.StoreID)
 	return err
 }
 
 const deleteOptionTemplate = `-- name: DeleteOptionTemplate :exec
 DELETE FROM option_templates
-WHERE id = $1
+WHERE id = $1 AND store_id = $2
 `
 
-func (q *Queries) DeleteOptionTemplate(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteOptionTemplate, id)
+type DeleteOptionTemplateParams struct {
+	ID      pgtype.UUID `json:"id"`
+	StoreID pgtype.UUID `json:"store_id"`
+}
+
+func (q *Queries) DeleteOptionTemplate(ctx context.Context, arg DeleteOptionTemplateParams) error {
+	_, err := q.db.Exec(ctx, deleteOptionTemplate, arg.ID, arg.StoreID)
 	return err
 }
 
 const deleteProduct = `-- name: DeleteProduct :exec
 UPDATE products
 SET deleted_at = now()
-WHERE id = $1
+WHERE id = $1 AND store_id = $2
 `
 
-func (q *Queries) DeleteProduct(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteProduct, id)
+type DeleteProductParams struct {
+	ID      pgtype.UUID `json:"id"`
+	StoreID pgtype.UUID `json:"store_id"`
+}
+
+func (q *Queries) DeleteProduct(ctx context.Context, arg DeleteProductParams) error {
+	_, err := q.db.Exec(ctx, deleteProduct, arg.ID, arg.StoreID)
 	return err
 }
 
@@ -335,7 +358,7 @@ func (q *Queries) GetAvailableKey(ctx context.Context, variantID pgtype.UUID) (P
 }
 
 const getCategory = `-- name: GetCategory :one
-SELECT id, parent_id, name, slug, description, is_active, created_at, updated_at FROM categories
+SELECT id, parent_id, name, slug, description, is_active, created_at, updated_at, store_id FROM categories
 WHERE id = $1 LIMIT 1
 `
 
@@ -351,17 +374,23 @@ func (q *Queries) GetCategory(ctx context.Context, id pgtype.UUID) (Category, er
 		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.StoreID,
 	)
 	return i, err
 }
 
 const getCategoryBySlug = `-- name: GetCategoryBySlug :one
-SELECT id, parent_id, name, slug, description, is_active, created_at, updated_at FROM categories
-WHERE slug = $1 LIMIT 1
+SELECT id, parent_id, name, slug, description, is_active, created_at, updated_at, store_id FROM categories
+WHERE store_id = $1 AND slug = $2 LIMIT 1
 `
 
-func (q *Queries) GetCategoryBySlug(ctx context.Context, slug string) (Category, error) {
-	row := q.db.QueryRow(ctx, getCategoryBySlug, slug)
+type GetCategoryBySlugParams struct {
+	StoreID pgtype.UUID `json:"store_id"`
+	Slug    string      `json:"slug"`
+}
+
+func (q *Queries) GetCategoryBySlug(ctx context.Context, arg GetCategoryBySlugParams) (Category, error) {
+	row := q.db.QueryRow(ctx, getCategoryBySlug, arg.StoreID, arg.Slug)
 	var i Category
 	err := row.Scan(
 		&i.ID,
@@ -372,12 +401,13 @@ func (q *Queries) GetCategoryBySlug(ctx context.Context, slug string) (Category,
 		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.StoreID,
 	)
 	return i, err
 }
 
 const getOptionTemplate = `-- name: GetOptionTemplate :one
-SELECT id, name, template_data, created_at, updated_at FROM option_templates
+SELECT id, name, template_data, created_at, updated_at, store_id FROM option_templates
 WHERE id = $1 LIMIT 1
 `
 
@@ -390,12 +420,13 @@ func (q *Queries) GetOptionTemplate(ctx context.Context, id pgtype.UUID) (Option
 		&i.TemplateData,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.StoreID,
 	)
 	return i, err
 }
 
 const getProduct = `-- name: GetProduct :one
-SELECT id, name, slug, description, is_active, is_digital, created_at, updated_at, deleted_at FROM products
+SELECT id, name, slug, description, is_active, is_digital, created_at, updated_at, deleted_at, store_id FROM products
 WHERE id = $1 LIMIT 1
 `
 
@@ -412,17 +443,23 @@ func (q *Queries) GetProduct(ctx context.Context, id pgtype.UUID) (Product, erro
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.StoreID,
 	)
 	return i, err
 }
 
 const getProductBySlug = `-- name: GetProductBySlug :one
-SELECT id, name, slug, description, is_active, is_digital, created_at, updated_at, deleted_at FROM products
-WHERE slug = $1 LIMIT 1
+SELECT id, name, slug, description, is_active, is_digital, created_at, updated_at, deleted_at, store_id FROM products
+WHERE store_id = $1 AND slug = $2 LIMIT 1
 `
 
-func (q *Queries) GetProductBySlug(ctx context.Context, slug string) (Product, error) {
-	row := q.db.QueryRow(ctx, getProductBySlug, slug)
+type GetProductBySlugParams struct {
+	StoreID pgtype.UUID `json:"store_id"`
+	Slug    string      `json:"slug"`
+}
+
+func (q *Queries) GetProductBySlug(ctx context.Context, arg GetProductBySlugParams) (Product, error) {
+	row := q.db.QueryRow(ctx, getProductBySlug, arg.StoreID, arg.Slug)
 	var i Product
 	err := row.Scan(
 		&i.ID,
@@ -434,6 +471,7 @@ func (q *Queries) GetProductBySlug(ctx context.Context, slug string) (Product, e
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.StoreID,
 	)
 	return i, err
 }
@@ -461,12 +499,13 @@ func (q *Queries) GetVariant(ctx context.Context, id pgtype.UUID) (ProductVarian
 }
 
 const listCategories = `-- name: ListCategories :many
-SELECT id, parent_id, name, slug, description, is_active, created_at, updated_at FROM categories
+SELECT id, parent_id, name, slug, description, is_active, created_at, updated_at, store_id FROM categories
+WHERE store_id = $1
 ORDER BY name ASC
 `
 
-func (q *Queries) ListCategories(ctx context.Context) ([]Category, error) {
-	rows, err := q.db.Query(ctx, listCategories)
+func (q *Queries) ListCategories(ctx context.Context, storeID pgtype.UUID) ([]Category, error) {
+	rows, err := q.db.Query(ctx, listCategories, storeID)
 	if err != nil {
 		return nil, err
 	}
@@ -483,6 +522,7 @@ func (q *Queries) ListCategories(ctx context.Context) ([]Category, error) {
 			&i.IsActive,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.StoreID,
 		); err != nil {
 			return nil, err
 		}
@@ -495,12 +535,13 @@ func (q *Queries) ListCategories(ctx context.Context) ([]Category, error) {
 }
 
 const listOptionTemplates = `-- name: ListOptionTemplates :many
-SELECT id, name, template_data, created_at, updated_at FROM option_templates
+SELECT id, name, template_data, created_at, updated_at, store_id FROM option_templates
+WHERE store_id = $1
 ORDER BY name ASC
 `
 
-func (q *Queries) ListOptionTemplates(ctx context.Context) ([]OptionTemplate, error) {
-	rows, err := q.db.Query(ctx, listOptionTemplates)
+func (q *Queries) ListOptionTemplates(ctx context.Context, storeID pgtype.UUID) ([]OptionTemplate, error) {
+	rows, err := q.db.Query(ctx, listOptionTemplates, storeID)
 	if err != nil {
 		return nil, err
 	}
@@ -514,6 +555,7 @@ func (q *Queries) ListOptionTemplates(ctx context.Context) ([]OptionTemplate, er
 			&i.TemplateData,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.StoreID,
 		); err != nil {
 			return nil, err
 		}
@@ -562,19 +604,21 @@ func (q *Queries) ListProductVariants(ctx context.Context, productID pgtype.UUID
 }
 
 const listProducts = `-- name: ListProducts :many
-SELECT p.id, p.name, p.slug, p.description, p.is_active, p.is_digital, p.created_at, p.updated_at, p.deleted_at FROM products p
+SELECT p.id, p.name, p.slug, p.description, p.is_active, p.is_digital, p.created_at, p.updated_at, p.deleted_at, p.store_id FROM products p
 LEFT JOIN product_categories pc ON p.id = pc.product_id
 WHERE 
-    ($3::uuid IS NULL OR pc.category_id = $3)
-    AND ($4::text IS NULL OR 
-         p.name ILIKE '%' || $4 || '%' OR 
-         p.description ILIKE '%' || $4 || '%')
-    AND ($5::boolean IS NULL OR p.is_active = $5)
+    p.store_id = $1
+    AND ($4::uuid IS NULL OR pc.category_id = $4)
+    AND ($5::text IS NULL OR 
+         p.name ILIKE '%' || $5 || '%' OR 
+         p.description ILIKE '%' || $5 || '%')
+    AND ($6::boolean IS NULL OR p.is_active = $6)
 ORDER BY p.created_at DESC
-LIMIT $1 OFFSET $2
+LIMIT $2 OFFSET $3
 `
 
 type ListProductsParams struct {
+	StoreID    pgtype.UUID `json:"store_id"`
 	Limit      int32       `json:"limit"`
 	Offset     int32       `json:"offset"`
 	CategoryID pgtype.UUID `json:"category_id"`
@@ -584,6 +628,7 @@ type ListProductsParams struct {
 
 func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error) {
 	rows, err := q.db.Query(ctx, listProducts,
+		arg.StoreID,
 		arg.Limit,
 		arg.Offset,
 		arg.CategoryID,
@@ -607,6 +652,7 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]P
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+			&i.StoreID,
 		); err != nil {
 			return nil, err
 		}
@@ -667,17 +713,18 @@ func (q *Queries) RemoveCategoryFromProduct(ctx context.Context, arg RemoveCateg
 const updateCategory = `-- name: UpdateCategory :one
 UPDATE categories
 SET 
-    parent_id = COALESCE($2, parent_id),
-    name = COALESCE($3, name),
-    slug = COALESCE($4, slug),
-    description = COALESCE($5, description),
-    is_active = COALESCE($6, is_active)
-WHERE id = $1
-RETURNING id, parent_id, name, slug, description, is_active, created_at, updated_at
+    parent_id = COALESCE($3, parent_id),
+    name = COALESCE($4, name),
+    slug = COALESCE($5, slug),
+    description = COALESCE($6, description),
+    is_active = COALESCE($7, is_active)
+WHERE id = $1 AND store_id = $2
+RETURNING id, parent_id, name, slug, description, is_active, created_at, updated_at, store_id
 `
 
 type UpdateCategoryParams struct {
 	ID          pgtype.UUID `json:"id"`
+	StoreID     pgtype.UUID `json:"store_id"`
 	ParentID    pgtype.UUID `json:"parent_id"`
 	Name        *string     `json:"name"`
 	Slug        *string     `json:"slug"`
@@ -688,6 +735,7 @@ type UpdateCategoryParams struct {
 func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error) {
 	row := q.db.QueryRow(ctx, updateCategory,
 		arg.ID,
+		arg.StoreID,
 		arg.ParentID,
 		arg.Name,
 		arg.Slug,
@@ -704,6 +752,7 @@ func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) 
 		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.StoreID,
 	)
 	return i, err
 }
@@ -711,17 +760,18 @@ func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) 
 const updateProduct = `-- name: UpdateProduct :one
 UPDATE products
 SET 
-    name = COALESCE($2, name),
-    slug = COALESCE($3, slug),
-    description = COALESCE($4, description),
-    is_active = COALESCE($5, is_active),
-    is_digital = COALESCE($6, is_digital)
-WHERE id = $1
-RETURNING id, name, slug, description, is_active, is_digital, created_at, updated_at, deleted_at
+    name = COALESCE($3, name),
+    slug = COALESCE($4, slug),
+    description = COALESCE($5, description),
+    is_active = COALESCE($6, is_active),
+    is_digital = COALESCE($7, is_digital)
+WHERE id = $1 AND store_id = $2
+RETURNING id, name, slug, description, is_active, is_digital, created_at, updated_at, deleted_at, store_id
 `
 
 type UpdateProductParams struct {
 	ID          pgtype.UUID `json:"id"`
+	StoreID     pgtype.UUID `json:"store_id"`
 	Name        *string     `json:"name"`
 	Slug        *string     `json:"slug"`
 	Description *string     `json:"description"`
@@ -732,6 +782,7 @@ type UpdateProductParams struct {
 func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error) {
 	row := q.db.QueryRow(ctx, updateProduct,
 		arg.ID,
+		arg.StoreID,
 		arg.Name,
 		arg.Slug,
 		arg.Description,
@@ -749,6 +800,7 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.StoreID,
 	)
 	return i, err
 }

@@ -13,6 +13,8 @@ import (
 type Querier interface {
 	AssignCategoryToProduct(ctx context.Context, arg AssignCategoryToProductParams) error
 	AssignOptionValueToVariant(ctx context.Context, arg AssignOptionValueToVariantParams) error
+	AssignRoleToUserInStore(ctx context.Context, arg AssignRoleToUserInStoreParams) error
+	AssignSaasRoleToUser(ctx context.Context, arg AssignSaasRoleToUserParams) error
 	// #############################################################################
 	// ## CATEGORIES
 	// #############################################################################
@@ -21,6 +23,10 @@ type Querier interface {
 	// ## OPTION TEMPLATES
 	// #############################################################################
 	CreateOptionTemplate(ctx context.Context, arg CreateOptionTemplateParams) (OptionTemplate, error)
+	// #############################################################################
+	// ## PAGES (Landing Pages & Custom Designs)
+	// #############################################################################
+	CreatePage(ctx context.Context, arg CreatePageParams) (Page, error)
 	// #############################################################################
 	// ## PRODUCTS
 	// #############################################################################
@@ -35,33 +41,62 @@ type Querier interface {
 	CreateProductOption(ctx context.Context, arg CreateProductOptionParams) (ProductOption, error)
 	CreateProductOptionValue(ctx context.Context, arg CreateProductOptionValueParams) (ProductOptionValue, error)
 	CreateProductVariant(ctx context.Context, arg CreateProductVariantParams) (ProductVariant, error)
+	// #############################################################################
+	// ## ROLES & PERMISSIONS
+	// #############################################################################
+	CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error)
+	// #############################################################################
+	// ## STORES
+	// #############################################################################
+	CreateStore(ctx context.Context, arg CreateStoreParams) (Store, error)
+	// #############################################################################
+	// ## TENANTS
+	// #############################################################################
+	CreateTenant(ctx context.Context, arg CreateTenantParams) (Tenant, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
-	DeleteCategory(ctx context.Context, id pgtype.UUID) error
-	DeleteOptionTemplate(ctx context.Context, id pgtype.UUID) error
-	DeleteProduct(ctx context.Context, id pgtype.UUID) error
+	DeleteCategory(ctx context.Context, arg DeleteCategoryParams) error
+	DeleteOptionTemplate(ctx context.Context, arg DeleteOptionTemplateParams) error
+	DeletePage(ctx context.Context, arg DeletePageParams) error
+	DeleteProduct(ctx context.Context, arg DeleteProductParams) error
 	DeleteUser(ctx context.Context, id pgtype.UUID) error
 	// Retrieves an available key for a variant and locks the row
 	// to prevent race conditions during checkout.
 	GetAvailableKey(ctx context.Context, variantID pgtype.UUID) (ProductKey, error)
 	GetCategory(ctx context.Context, id pgtype.UUID) (Category, error)
-	GetCategoryBySlug(ctx context.Context, slug string) (Category, error)
+	GetCategoryBySlug(ctx context.Context, arg GetCategoryBySlugParams) (Category, error)
 	GetOptionTemplate(ctx context.Context, id pgtype.UUID) (OptionTemplate, error)
+	GetPage(ctx context.Context, id pgtype.UUID) (Page, error)
+	GetPageBySlug(ctx context.Context, arg GetPageBySlugParams) (Page, error)
 	GetProduct(ctx context.Context, id pgtype.UUID) (Product, error)
-	GetProductBySlug(ctx context.Context, slug string) (Product, error)
+	GetProductBySlug(ctx context.Context, arg GetProductBySlugParams) (Product, error)
+	GetStore(ctx context.Context, id pgtype.UUID) (Store, error)
+	GetStoreByDomain(ctx context.Context, domain *string) (Store, error)
+	GetStoreBySlug(ctx context.Context, slug string) (Store, error)
+	GetTenant(ctx context.Context, id pgtype.UUID) (Tenant, error)
 	GetUserByEmailOrUsername(ctx context.Context, email *string) (User, error)
 	GetUserById(ctx context.Context, id pgtype.UUID) (User, error)
+	GetUserSaasRoles(ctx context.Context, userID pgtype.UUID) ([]Role, error)
+	GetUserStoreRoles(ctx context.Context, arg GetUserStoreRolesParams) ([]Role, error)
 	GetVariant(ctx context.Context, id pgtype.UUID) (ProductVariant, error)
 	HardDeleteUser(ctx context.Context, id pgtype.UUID) error
-	ListCategories(ctx context.Context) ([]Category, error)
-	ListOptionTemplates(ctx context.Context) ([]OptionTemplate, error)
+	ListCategories(ctx context.Context, storeID pgtype.UUID) ([]Category, error)
+	ListOptionTemplates(ctx context.Context, storeID pgtype.UUID) ([]OptionTemplate, error)
+	ListPages(ctx context.Context, storeID pgtype.UUID) ([]Page, error)
 	ListProductVariants(ctx context.Context, productID pgtype.UUID) ([]ProductVariant, error)
 	ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error)
+	ListRolesByTenant(ctx context.Context, tenantID pgtype.UUID) ([]Role, error)
+	ListStoresByTenant(ctx context.Context, tenantID pgtype.UUID) ([]Store, error)
+	ListTenants(ctx context.Context) ([]Tenant, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	MarkKeyAsUsed(ctx context.Context, arg MarkKeyAsUsedParams) (ProductKey, error)
+	// Copies draft_content to content and sets is_published = true
+	PublishPage(ctx context.Context, arg PublishPageParams) (Page, error)
 	RemoveCategoryFromProduct(ctx context.Context, arg RemoveCategoryFromProductParams) error
 	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error)
+	UpdatePage(ctx context.Context, arg UpdatePageParams) (Page, error)
 	UpdatePassword(ctx context.Context, arg UpdatePasswordParams) error
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
+	UpdateStore(ctx context.Context, arg UpdateStoreParams) (Store, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }
 

@@ -22,7 +22,7 @@ INSERT INTO users (
     role
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7
-) RETURNING id, username, hashed_password, first_name, last_name, full_name, email, phone, role, is_email_verified, is_active, created_at, updated_at, deleted_at
+) RETURNING id, username, hashed_password, first_name, last_name, full_name, email, phone, role, is_email_verified, is_active, created_at, updated_at, deleted_at, is_saas_admin
 `
 
 type CreateUserParams struct {
@@ -61,6 +61,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.IsSaasAdmin,
 	)
 	return i, err
 }
@@ -77,7 +78,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id pgtype.UUID) error {
 }
 
 const getUserByEmailOrUsername = `-- name: GetUserByEmailOrUsername :one
-SELECT id, username, hashed_password, first_name, last_name, full_name, email, phone, role, is_email_verified, is_active, created_at, updated_at, deleted_at FROM users
+SELECT id, username, hashed_password, first_name, last_name, full_name, email, phone, role, is_email_verified, is_active, created_at, updated_at, deleted_at, is_saas_admin FROM users
 WHERE email = $1 OR username = $1 LIMIT 1
 `
 
@@ -99,12 +100,13 @@ func (q *Queries) GetUserByEmailOrUsername(ctx context.Context, email *string) (
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.IsSaasAdmin,
 	)
 	return i, err
 }
 
 const getUserById = `-- name: GetUserById :one
-SELECT id, username, hashed_password, first_name, last_name, full_name, email, phone, role, is_email_verified, is_active, created_at, updated_at, deleted_at FROM users
+SELECT id, username, hashed_password, first_name, last_name, full_name, email, phone, role, is_email_verified, is_active, created_at, updated_at, deleted_at, is_saas_admin FROM users
 WHERE id = $1 LIMIT 1
 `
 
@@ -126,6 +128,7 @@ func (q *Queries) GetUserById(ctx context.Context, id pgtype.UUID) (User, error)
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.IsSaasAdmin,
 	)
 	return i, err
 }
@@ -141,7 +144,7 @@ func (q *Queries) HardDeleteUser(ctx context.Context, id pgtype.UUID) error {
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, username, hashed_password, first_name, last_name, full_name, email, phone, role, is_email_verified, is_active, created_at, updated_at, deleted_at FROM users
+SELECT id, username, hashed_password, first_name, last_name, full_name, email, phone, role, is_email_verified, is_active, created_at, updated_at, deleted_at, is_saas_admin FROM users
 WHERE 
     ($2::user_role IS NULL OR role = $2)
     AND ($3::text IS NULL OR 
@@ -194,6 +197,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+			&i.IsSaasAdmin,
 		); err != nil {
 			return nil, err
 		}
@@ -232,7 +236,7 @@ SET
     is_email_verified = COALESCE($7, is_email_verified),
     is_active = COALESCE($8, is_active)
 WHERE id = $1
-RETURNING id, username, hashed_password, first_name, last_name, full_name, email, phone, role, is_email_verified, is_active, created_at, updated_at, deleted_at
+RETURNING id, username, hashed_password, first_name, last_name, full_name, email, phone, role, is_email_verified, is_active, created_at, updated_at, deleted_at, is_saas_admin
 `
 
 type UpdateUserParams struct {
@@ -273,6 +277,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.IsSaasAdmin,
 	)
 	return i, err
 }

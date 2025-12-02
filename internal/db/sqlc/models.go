@@ -11,6 +11,48 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type RoleScope string
+
+const (
+	RoleScopeSaas  RoleScope = "saas"
+	RoleScopeStore RoleScope = "store"
+)
+
+func (e *RoleScope) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = RoleScope(s)
+	case string:
+		*e = RoleScope(s)
+	default:
+		return fmt.Errorf("unsupported scan type for RoleScope: %T", src)
+	}
+	return nil
+}
+
+type NullRoleScope struct {
+	RoleScope RoleScope `json:"role_scope"`
+	Valid     bool      `json:"valid"` // Valid is true if RoleScope is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullRoleScope) Scan(value interface{}) error {
+	if value == nil {
+		ns.RoleScope, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.RoleScope.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullRoleScope) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.RoleScope), nil
+}
+
 type UserRole string
 
 const (
@@ -63,6 +105,7 @@ type Category struct {
 	IsActive    bool               `json:"is_active"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	StoreID     pgtype.UUID        `json:"store_id"`
 }
 
 type DigitalAsset struct {
@@ -83,6 +126,23 @@ type OptionTemplate struct {
 	TemplateData []byte             `json:"template_data"`
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	StoreID      pgtype.UUID        `json:"store_id"`
+}
+
+type Page struct {
+	ID           pgtype.UUID        `json:"id"`
+	StoreID      pgtype.UUID        `json:"store_id"`
+	Name         string             `json:"name"`
+	Slug         string             `json:"slug"`
+	Content      []byte             `json:"content"`
+	DraftContent []byte             `json:"draft_content"`
+	IsPublished  bool               `json:"is_published"`
+	Type         string             `json:"type"`
+	CustomCss    *string            `json:"custom_css"`
+	CustomJsHead *string            `json:"custom_js_head"`
+	CustomJsBody *string            `json:"custom_js_body"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Product struct {
@@ -95,6 +155,7 @@ type Product struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
+	StoreID     pgtype.UUID        `json:"store_id"`
 }
 
 type ProductCategory struct {
@@ -139,6 +200,43 @@ type ProductVariant struct {
 	DeletedAt     pgtype.Timestamptz `json:"deleted_at"`
 }
 
+type Role struct {
+	ID          pgtype.UUID        `json:"id"`
+	TenantID    pgtype.UUID        `json:"tenant_id"`
+	Name        string             `json:"name"`
+	Description *string            `json:"description"`
+	Scope       RoleScope          `json:"scope"`
+	Permissions []string           `json:"permissions"`
+	IsTemplate  bool               `json:"is_template"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type Store struct {
+	ID             pgtype.UUID        `json:"id"`
+	TenantID       pgtype.UUID        `json:"tenant_id"`
+	Name           string             `json:"name"`
+	Slug           string             `json:"slug"`
+	Domain         *string            `json:"domain"`
+	Settings       []byte             `json:"settings"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+	Config         []byte             `json:"config"`
+	CustomCss      *string            `json:"custom_css"`
+	CustomJsHead   *string            `json:"custom_js_head"`
+	CustomJsBody   *string            `json:"custom_js_body"`
+	CompiledCssUrl *string            `json:"compiled_css_url"`
+}
+
+type Tenant struct {
+	ID           pgtype.UUID        `json:"id"`
+	Name         string             `json:"name"`
+	BillingEmail *string            `json:"billing_email"`
+	Status       string             `json:"status"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
 type User struct {
 	ID              pgtype.UUID        `json:"id"`
 	Username        *string            `json:"username"`
@@ -154,6 +252,18 @@ type User struct {
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt       pgtype.Timestamptz `json:"deleted_at"`
+	IsSaasAdmin     bool               `json:"is_saas_admin"`
+}
+
+type UserSaasRole struct {
+	UserID pgtype.UUID `json:"user_id"`
+	RoleID pgtype.UUID `json:"role_id"`
+}
+
+type UserStoreRole struct {
+	UserID  pgtype.UUID `json:"user_id"`
+	StoreID pgtype.UUID `json:"store_id"`
+	RoleID  pgtype.UUID `json:"role_id"`
 }
 
 type VariantOptionValue struct {

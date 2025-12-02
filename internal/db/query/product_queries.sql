@@ -4,9 +4,9 @@
 
 -- name: CreateCategory :one
 INSERT INTO categories (
-    parent_id, name, slug, description, is_active
+    store_id, parent_id, name, slug, description, is_active
 ) VALUES (
-    $1, $2, $3, $4, $5
+    $1, $2, $3, $4, $5, $6
 ) RETURNING *;
 
 -- name: GetCategory :one
@@ -15,10 +15,11 @@ WHERE id = $1 LIMIT 1;
 
 -- name: GetCategoryBySlug :one
 SELECT * FROM categories
-WHERE slug = $1 LIMIT 1;
+WHERE store_id = $1 AND slug = $2 LIMIT 1;
 
 -- name: ListCategories :many
 SELECT * FROM categories
+WHERE store_id = $1
 ORDER BY name ASC;
 
 -- name: UpdateCategory :one
@@ -29,12 +30,12 @@ SET
     slug = COALESCE(sqlc.narg('slug'), slug),
     description = COALESCE(sqlc.narg('description'), description),
     is_active = COALESCE(sqlc.narg('is_active'), is_active)
-WHERE id = $1
+WHERE id = $1 AND store_id = $2
 RETURNING *;
 
 -- name: DeleteCategory :exec
 DELETE FROM categories
-WHERE id = $1;
+WHERE id = $1 AND store_id = $2;
 
 -- #############################################################################
 -- ## PRODUCTS
@@ -42,9 +43,9 @@ WHERE id = $1;
 
 -- name: CreateProduct :one
 INSERT INTO products (
-    name, slug, description, is_active, is_digital
+    store_id, name, slug, description, is_active, is_digital
 ) VALUES (
-    $1, $2, $3, $4, $5
+    $1, $2, $3, $4, $5, $6
 ) RETURNING *;
 
 -- name: GetProduct :one
@@ -53,19 +54,20 @@ WHERE id = $1 LIMIT 1;
 
 -- name: GetProductBySlug :one
 SELECT * FROM products
-WHERE slug = $1 LIMIT 1;
+WHERE store_id = $1 AND slug = $2 LIMIT 1;
 
 -- name: ListProducts :many
 SELECT p.* FROM products p
 LEFT JOIN product_categories pc ON p.id = pc.product_id
 WHERE 
-    (sqlc.narg('category_id')::uuid IS NULL OR pc.category_id = sqlc.narg('category_id'))
+    p.store_id = $1
+    AND (sqlc.narg('category_id')::uuid IS NULL OR pc.category_id = sqlc.narg('category_id'))
     AND (sqlc.narg('search')::text IS NULL OR 
          p.name ILIKE '%' || sqlc.narg('search') || '%' OR 
          p.description ILIKE '%' || sqlc.narg('search') || '%')
     AND (sqlc.narg('is_active')::boolean IS NULL OR p.is_active = sqlc.narg('is_active'))
 ORDER BY p.created_at DESC
-LIMIT $1 OFFSET $2;
+LIMIT $2 OFFSET $3;
 
 -- name: UpdateProduct :one
 UPDATE products
@@ -75,13 +77,13 @@ SET
     description = COALESCE(sqlc.narg('description'), description),
     is_active = COALESCE(sqlc.narg('is_active'), is_active),
     is_digital = COALESCE(sqlc.narg('is_digital'), is_digital)
-WHERE id = $1
+WHERE id = $1 AND store_id = $2
 RETURNING *;
 
 -- name: DeleteProduct :exec
 UPDATE products
 SET deleted_at = now()
-WHERE id = $1;
+WHERE id = $1 AND store_id = $2;
 
 -- name: AssignCategoryToProduct :exec
 INSERT INTO product_categories (product_id, category_id)
@@ -132,8 +134,8 @@ ON CONFLICT DO NOTHING;
 -- #############################################################################
 
 -- name: CreateOptionTemplate :one
-INSERT INTO option_templates (name, template_data)
-VALUES ($1, $2)
+INSERT INTO option_templates (store_id, name, template_data)
+VALUES ($1, $2, $3)
 RETURNING *;
 
 -- name: GetOptionTemplate :one
@@ -142,11 +144,12 @@ WHERE id = $1 LIMIT 1;
 
 -- name: ListOptionTemplates :many
 SELECT * FROM option_templates
+WHERE store_id = $1
 ORDER BY name ASC;
 
 -- name: DeleteOptionTemplate :exec
 DELETE FROM option_templates
-WHERE id = $1;
+WHERE id = $1 AND store_id = $2;
 
 -- #############################################################################
 -- ## DIGITAL INVENTORY

@@ -5,7 +5,7 @@ import (
 )
 
 // Store defines all functions to execute db queries and transactions
-type Store interface {
+type DBStore interface {
 	Querier
 }
 
@@ -16,7 +16,7 @@ type SQLStore struct {
 }
 
 // NewStore creates a new store
-func NewStore(connPool *pgxpool.Pool) Store {
+func NewStore(connPool *pgxpool.Pool) DBStore {
 	return &SQLStore{
 		connPool: connPool,
 		Queries:  New(connPool),

@@ -17,12 +17,12 @@ import (
 // Server serves HTTP requests for our banking service.
 type Server struct {
 	config     *config.Config
-	store      db.Store
+	store      db.DBStore
 	tokenMaker token.Maker
 	router     *fiber.App
 }
 
-func NewServer(config *config.Config, store db.Store) (*Server, error) {
+func NewServer(config *config.Config, store db.DBStore) (*Server, error) {
 	tokenMaker, err := token.NewPasetoMaker(config.TokenSymmetricKey)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create token maker: %w", err)
@@ -83,7 +83,7 @@ func (server *Server) Start() error {
 func (server *Server) GetRouter() *fiber.App {
 	return server.router
 }
-func (server *Server) GetDB() db.Store {
+func (server *Server) GetDB() db.DBStore {
 	return server.store
 }
 func (server *Server) GetTokenMaker() token.Maker {
