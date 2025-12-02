@@ -11,13 +11,57 @@ import (
 )
 
 type Querier interface {
+	AssignCategoryToProduct(ctx context.Context, arg AssignCategoryToProductParams) error
+	AssignOptionValueToVariant(ctx context.Context, arg AssignOptionValueToVariantParams) error
+	// #############################################################################
+	// ## CATEGORIES
+	// #############################################################################
+	CreateCategory(ctx context.Context, arg CreateCategoryParams) (Category, error)
+	// #############################################################################
+	// ## OPTION TEMPLATES
+	// #############################################################################
+	CreateOptionTemplate(ctx context.Context, arg CreateOptionTemplateParams) (OptionTemplate, error)
+	// #############################################################################
+	// ## PRODUCTS
+	// #############################################################################
+	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
+	// #############################################################################
+	// ## DIGITAL INVENTORY
+	// #############################################################################
+	CreateProductKey(ctx context.Context, arg CreateProductKeyParams) (ProductKey, error)
+	// #############################################################################
+	// ## OPTIONS & VARIANTS
+	// #############################################################################
+	CreateProductOption(ctx context.Context, arg CreateProductOptionParams) (ProductOption, error)
+	CreateProductOptionValue(ctx context.Context, arg CreateProductOptionValueParams) (ProductOptionValue, error)
+	CreateProductVariant(ctx context.Context, arg CreateProductVariantParams) (ProductVariant, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	DeleteCategory(ctx context.Context, id pgtype.UUID) error
+	DeleteOptionTemplate(ctx context.Context, id pgtype.UUID) error
+	DeleteProduct(ctx context.Context, id pgtype.UUID) error
 	DeleteUser(ctx context.Context, id pgtype.UUID) error
+	// Retrieves an available key for a variant and locks the row
+	// to prevent race conditions during checkout.
+	GetAvailableKey(ctx context.Context, variantID pgtype.UUID) (ProductKey, error)
+	GetCategory(ctx context.Context, id pgtype.UUID) (Category, error)
+	GetCategoryBySlug(ctx context.Context, slug string) (Category, error)
+	GetOptionTemplate(ctx context.Context, id pgtype.UUID) (OptionTemplate, error)
+	GetProduct(ctx context.Context, id pgtype.UUID) (Product, error)
+	GetProductBySlug(ctx context.Context, slug string) (Product, error)
 	GetUserByEmailOrUsername(ctx context.Context, email *string) (User, error)
 	GetUserById(ctx context.Context, id pgtype.UUID) (User, error)
+	GetVariant(ctx context.Context, id pgtype.UUID) (ProductVariant, error)
 	HardDeleteUser(ctx context.Context, id pgtype.UUID) error
+	ListCategories(ctx context.Context) ([]Category, error)
+	ListOptionTemplates(ctx context.Context) ([]OptionTemplate, error)
+	ListProductVariants(ctx context.Context, productID pgtype.UUID) ([]ProductVariant, error)
+	ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
+	MarkKeyAsUsed(ctx context.Context, arg MarkKeyAsUsedParams) (ProductKey, error)
+	RemoveCategoryFromProduct(ctx context.Context, arg RemoveCategoryFromProductParams) error
+	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error)
 	UpdatePassword(ctx context.Context, arg UpdatePasswordParams) error
+	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }
 

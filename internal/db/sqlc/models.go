@@ -77,6 +77,14 @@ type DigitalAsset struct {
 	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
 }
 
+type OptionTemplate struct {
+	ID           pgtype.UUID        `json:"id"`
+	Name         string             `json:"name"`
+	TemplateData []byte             `json:"template_data"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Product struct {
 	ID          pgtype.UUID        `json:"id"`
 	Name        string             `json:"name"`
